@@ -1,9 +1,16 @@
+from datetime import datetime
+from enum import Enum
+from typing import Optional
+from CLI import ToDoManager
+
+
 class Project:
-    def __init__(self, id, name, description):
+    def __init__(self, id, name, description=""):
         self.id = id
         self.name = name
         self.description = description
         self.tasks = []
+        self.created_time = datetime.now()
 
     def add_task(self, task):
         self.tasks.append(task)
@@ -12,33 +19,24 @@ class Project:
         self.tasks = [t for t in self.tasks if t.id != task_id]
 
 
-class ToDoManager:
-    def __init__(self):
-        self.projects = []
-        self.next_proj_id = 1
-
-    def add_project(self):
-        pass
-    def edit_project(self):
-        pass
-    def print_projects(self):
-        pass
+class TaskStatus(Enum):
+    TODO = "todo"
+    DOING = "doing"
+    DONE = "done"
 
 
+class Task:
+    def __init__(self, id: str, project_id: str, name: str, description: str = ""):
+        self.id = id
+        self.project_id = project_id
+        self.name = name
+        self.description = description
+        self.status = TaskStatus.TODO
+        deadline: Optional[datetime] = None
 
 
-    def create_project(self, name, description):
-        proj = Project(self.next_proj_id, name, description)
-        self.projects.append(proj)
-        self.next_proj_id += 1
-
-    def find_project(self, proj_id):
-        for p in self.projects:
-            if p.id==proj_id:
-                return p
-        raise KeyError("پروژه یافت نشد")
 def main_loop():
-    todo=ToDoManager()
+    todo = ToDoManager()
     while True:
         print("1: project list")
         print("2: add project")
@@ -63,5 +61,3 @@ def main_loop():
 
 if __name__ == "__main__":
     main_loop()
-
-
