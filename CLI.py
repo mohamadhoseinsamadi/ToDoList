@@ -1,4 +1,13 @@
-from Main import Project
+from models import Project
+from config import (
+    MAX_PROJECTS,
+    MAX_TASKS,
+    MAX_PROJECT_NAME_LENGTH,
+    MAX_PROJECT_DESCRIPTION_LENGTH,
+    MAX_TASK_NAME_LENGTH,
+    MAX_TASK_DESCRIPTION_LENGTH
+)
+import config
 
 
 class ToDoManager:
