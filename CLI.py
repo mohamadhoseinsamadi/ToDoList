@@ -1,14 +1,12 @@
 from models import Project
 from config import (
-    MAX_PROJECTS,
-    MAX_TASKS,
+    MAX_NUMBER_OF_PROJECTS,
+    MAX_NUMBER_OF_TASKS,
     MAX_PROJECT_NAME_LENGTH,
     MAX_PROJECT_DESCRIPTION_LENGTH,
     MAX_TASK_NAME_LENGTH,
     MAX_TASK_DESCRIPTION_LENGTH
 )
-import config
-
 
 class ToDoManager:
     def __init__(self):
