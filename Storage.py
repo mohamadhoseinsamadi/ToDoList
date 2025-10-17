@@ -1,13 +1,13 @@
-from Main import Project, Task
+from models import Project, Task
 
 
-class MemoryStorage:
+class Memory:
     def __init__(self):
         self.projects: list[Project] = []
         self.tasks: list[Task] = []
 
     def add_project(self, project: Project) -> None:
-        self.projects[project.id] = project
+        self.projects.append(project)
     def edite_project(self, project_id: str, name: str, description: str) -> bool:
         if project_id in self.projects:
             pass
