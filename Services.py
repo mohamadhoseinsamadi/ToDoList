@@ -18,9 +18,9 @@ class ProjectService:
 
     def add_project(self, name: str, description: str):
         if len(name) > MAX_PROJECT_NAME_LENGTH:
-            print(f"Project name cannot exceed {MAX_PROJECT_NAME_LENGTH} characters")
+            print(f"Project's name cannot exceed {MAX_PROJECT_NAME_LENGTH} characters")
         elif len(description) > MAX_PROJECT_DESCRIPTION_LENGTH:
-            print(f"Project description cannot exceed {MAX_PROJECT_DESCRIPTION_LENGTH} characters")
+            print(f"Project's description cannot exceed {MAX_PROJECT_DESCRIPTION_LENGTH} characters")
         elif len(self.storage.projects) >= MAX_NUMBER_OF_PROJECTS:
             print(f"Cannot exceed maximum number of projects: {MAX_NUMBER_OF_PROJECTS}")
         else:
