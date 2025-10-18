@@ -13,14 +13,13 @@ def main_loop():
             case "1":
                 print("Project list: ")
                 todo.print_projects()
-                break
             case "2":
                 name = input("Enter project name: ").strip()
                 print(f"Adding project: {name}")
-                break
+
             case "3":
                 print("Exiting...")
-                break
+
             case _:
                 print("???")
 

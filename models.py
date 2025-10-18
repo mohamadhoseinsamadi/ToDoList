@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 
 
 class Project:
@@ -8,14 +8,8 @@ class Project:
         self.id = id
         self.name = name
         self.description = description
-        self.tasks = []
+        self.tasks: List[Task] = []
         self.created_time = datetime.now()
-
-    def add_task(self, task):
-        self.tasks.append(task)
-
-    def delete_task(self, task_id):
-        self.tasks = [t for t in self.tasks if t.id != task_id]
 
 
 class TaskStatus(Enum):
@@ -31,5 +25,6 @@ class Task:
         self.name = name
         self.description = description
         self.status = TaskStatus.TODO
+        self.created_time = datetime.now()
         deadline: Optional[datetime] = None
 
