@@ -1,110 +1,129 @@
 import uuid
+from typing import List, Optional, Tuple, Union
 
-from models import Project
+from models import Project, Task, TaskStatus
 from config import (
     MAX_NUMBER_OF_PROJECTS,
     MAX_NUMBER_OF_TASKS,
     MAX_PROJECT_NAME_LENGTH,
     MAX_PROJECT_DESCRIPTION_LENGTH,
     MAX_TASK_NAME_LENGTH,
-    MAX_TASK_DESCRIPTION_LENGTH
+    MAX_TASK_DESCRIPTION_LENGTH,
 )
 from Storage import Memory
 
 
-class ProjectService:
+class ProjectTaskService:
     def __init__(self, storage: Memory):
         self.storage = storage
 
-    def add_project(self, name: str, description: str):
+    def add_project(self, name: str, description: str) -> Tuple[bool, str]:
         if len(name) > MAX_PROJECT_NAME_LENGTH:
-            print(f"Project's name cannot exceed {MAX_PROJECT_NAME_LENGTH} characters")
-        elif len(description) > MAX_PROJECT_DESCRIPTION_LENGTH:
-            print(f"Project's description cannot exceed {MAX_PROJECT_DESCRIPTION_LENGTH} characters")
-        elif len(self.storage.projects) >= MAX_NUMBER_OF_PROJECTS:
-            print(f"Cannot exceed maximum number of projects: {MAX_NUMBER_OF_PROJECTS}")
-        else:
-            project = Project(id=str(uuid.uuid4()), name=name, description=description)
-            self.storage.add_project(project)
-            print("Project created successfully")
+            return False, f"Project's name cannot exceed {MAX_PROJECT_NAME_LENGTH} characters"
+        if len(description) > MAX_PROJECT_DESCRIPTION_LENGTH:
+            return False, f"Project's description cannot exceed {MAX_PROJECT_DESCRIPTION_LENGTH} characters"
+        if len(self.storage.projects) >= MAX_NUMBER_OF_PROJECTS:
+            return False, f"Cannot exceed maximum number of projects: {MAX_NUMBER_OF_PROJECTS}"
 
-    def find_project(self, name: str):
-        for project in self.storage.projects:
-            if project.name == name:
-                return project
-        return None
+        project = Project(id=str(uuid.uuid4()), name=name, description=description)
+        self.storage.add_project(project)
+        return True, "Project created successfully"
 
-    def print_all_projects(self):
-        pass
+    def find_project(self, index: int) -> Optional[Project]:
+        if index>len(self.storage.projects) or index<=0 :
+            return None
+        return self.storage.projects[index-1]
 
-    def edit_project(self):
-        pass
+    def print_all_projects(self) -> List[Project]:
+        return self.storage.get_all_projects()
 
-    def delete_project(self):
-        pass
+    def edit_project(self, index: int, new_name: Optional[str] = None,new_description: Optional[str] = None) -> Tuple[bool, str]:
+        idx = index
+        if index>len(self.storage.projects) or index<=0:
+            return False, "Project not found"
 
+        project = self.storage.projects[idx]
+        if new_name is not None:
+            if len(new_name) > MAX_PROJECT_NAME_LENGTH:
+                return False, f"Project's name cannot exceed {MAX_PROJECT_NAME_LENGTH} characters"
+            project.name = new_name
 
-class TaskService:
-    def __init__(self, storage: Memory):
-        self.storage = storage
-        self.project_service = ProjectService(storage)
+        if new_description is not None:
+            if len(new_description) > MAX_PROJECT_DESCRIPTION_LENGTH:
+                return False, f"Project's description cannot exceed {MAX_PROJECT_DESCRIPTION_LENGTH} characters"
+            project.description = new_description
 
-    def find_task(self, project_name: str, task_title: str):
-        project = self.project_service.find_project(project_name)
-        if not project:
-            print("Task not found")
-        else:
-            pass
+        return True, "Project updated successfully"
 
-    def create_task(self, project_name: str, title: str, description: str) -> tuple[bool, str]:
-        project = self.project_service.find_project(project_name)
-        if not project:
-            print("Project not found")
-        elif len(title) > MAX_TASK_NAME_LENGTH:
-            print(f"Task title cannot exceed {MAX_TASK_NAME_LENGTH} characters")
-        elif len(description) > MAX_TASK_DESCRIPTION_LENGTH:
-            print(f"Task description cannot exceed {MAX_TASK_DESCRIPTION_LENGTH} characters")
-        else:
-            project_tasks = self.storage.get_project_tasks(project.id)
-            if len(project_tasks) >= MAX_NUMBER_OF_TASKS:
-                print( f"Cannot exceed maximum number of tasks per project: {MAX_NUMBER_OF_TASKS}")
+    def delete_project(self, project_id: str) -> Tuple[bool, str]:
+        idx = self.storage.find_project_index(project_id)
+        if idx == -1:
+            return False, "Project not found"
 
-        task = Task( id=str(uuid.uuid4()),project_id=project.id,title=title,description=description,status=TaskStatus.TODO)
-        self.storage.add_task(task)
-        print("Task created successfully")
+        del self.storage.projects[idx]
+        return True, "Project deleted successfully"
 
-    def edit_task(self, project_name: str, task_title: str, new_title: str, description: str, status: str) -> tuple[
-        bool, str]:
-        task = self.find_task(project_name, task_title)
-        if not task:
-            return False, "Task not found"
-        if len(new_title) > MAX_TASK_DESCRIPTION_LENGTH:
-            return False, f"Task title cannot exceed {MAX_TASK_DESCRIPTION_LENGTH} characters"
-
+    def create_task(self, index: int, title: str, description: str) -> Tuple[bool, str]:
+        project = self.find_project(index)
+        if len(title) > MAX_TASK_NAME_LENGTH:
+            return False, f"Task title cannot exceed {MAX_TASK_NAME_LENGTH} characters"
         if len(description) > MAX_TASK_DESCRIPTION_LENGTH:
             return False, f"Task description cannot exceed {MAX_TASK_DESCRIPTION_LENGTH} characters"
 
-        try:
-            task_status = TaskStatus(status)
-        except ValueError:
-            return False, "Invalid status. Must be one of: todo, doing, done"
+        project_tasks = self.storage.get_project_tasks(project.id)
+        if len(project_tasks) >= MAX_NUMBER_OF_TASKS:
+            return False, f"Cannot exceed maximum number of tasks per project: {MAX_NUMBER_OF_TASKS}"
 
-        success = self.storage.update_task(task.id, new_title, description, task_status)
-        return success, "Task updated successfully" if success else "Failed to update task"
+        task = Task(id=str(uuid.uuid4()), project_id=project.id, name=title,
+                    description=description)
+        self.storage.add_task_to_project(project.id, task)
+        return True, "Task created successfully"
 
-    def delete_task(self, project_name: str, task_title: str) -> tuple[bool, str]:
-        task = self.get_task_by_title(project_name, task_title)
+    def find_task(self, project: Project, task_title: str) -> Optional[Task]:
+        for t in project.tasks:
+            if t.name == task_title or t.name == task_title:
+                return t
+        return None
+
+    def edit_task(self, index: int, task_title: str,new_title: Optional[str] = None,description: Optional[str] = None,status: Optional[str] = None) -> Tuple[bool, str]:
+
+        project = self.find_project(index)
+        task = self.find_task(project, task_title)
         if not task:
             return False, "Task not found"
 
+        if new_title is not None:
+            if len(new_title) > MAX_TASK_NAME_LENGTH:
+                return False, f"Task title cannot exceed {MAX_TASK_NAME_LENGTH} characters"
+            task.title = new_title
+
+        if description is not None:
+            if len(description) > MAX_TASK_DESCRIPTION_LENGTH:
+                return False, f"Task description cannot exceed {MAX_TASK_DESCRIPTION_LENGTH} characters"
+            task.description = description
+
+        if status is not None:
+            try:
+                task_status = TaskStatus(status)
+            except ValueError:
+                return False, "Invalid status. Must be one of: todo, doing, done"
+            task.status = task_status
+
+        return True, "Task updated successfully"
+
+    def delete_task(self, index: int, task_title: str) -> Tuple[bool, str]:
+        project = self.find_project(index)
+        task = self.find_task(project, task_title)
+        if not task:
+            return False, "Task not found"
         success = self.storage.delete_task(task.id)
-        return success, "Task deleted successfully" if success else "Task not found"
+        return (success, "Task deleted successfully") if success else (False, "Failed to delete task")
 
-    def list_project_tasks(self, project_name: str) -> tuple[bool, str | List[Task]]:
-        project = self.project_service.get_project_by_name(project_name)
-
+    def print_project_tasks(self, index: int) -> list[Task] | None:
+        if index>len(self.storage.projects) or index<=0 :
+            return None
+        project = self.find_project(index)
         if not project:
-            return False, "Project not found"
-
+            return None
         tasks = self.storage.get_project_tasks(project.id)
-        return True, tasks
+        return tasks

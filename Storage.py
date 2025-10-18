@@ -16,17 +16,22 @@ class Memory:
     def add_project(self, project: Project) -> None:
         self.projects.append(project)
 
-    def edite_project_name(self, project: Project, new_name: str) -> bool:
+    def edit_project_name(self, project: Project, new_name: str) -> bool:
         idx = self.find_project_index(project.id)
         if idx != -1:
             self.projects[idx].name = new_name
+            return True
+        return False
+    def edit_project_description(self, project: Project, new_desc: str) -> bool:
+        idx = self.find_project_index(project.id)
+        if idx != -1:
+            self.projects[idx].description = new_desc
             return True
         return False
 
     def delete_project(self, project_id: str) -> bool:
         idx = self.find_project_index(project_id)
         if idx != -1:
-
             del self.projects[idx]
             return True
         return False
@@ -50,11 +55,10 @@ class Memory:
         self.projects[idx].tasks.append(task)
         return True
 
-    def get_project_tasks(self, project_id: str) -> List[Task]:
-        idx = self.find_project_index(project_id)
-        if idx == -1:
+    def get_project_tasks(self, index: int) -> List[Task]:
+        if index == -1:
             return []
-        return sorted(self.projects[idx].tasks, key=lambda t: getattr(t, "created_time", datetime.min))
+        return self.projects[index].tasks
 
     def update_task(self, project_id: str, task_id: str, *, title: Optional[str] = None,
                     description: Optional[str] = None, status: Optional[str] = None) -> bool:
@@ -71,4 +75,12 @@ class Memory:
                 if status is not None:
                     t.status = status
                 return True
+        return False
+
+    def delete_task(self, task_id: str) -> bool:
+        for p in self.projects:
+            for i, t in enumerate(p.tasks):
+                if t.id == task_id:
+                    del p.tasks[i]
+                    return True
         return False
