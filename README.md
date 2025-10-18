@@ -4,14 +4,12 @@
 
 A robust and intuitive task management system built with Python, leveraging Object-Oriented Programming (OOP) principles. This project showcases clean architecture, modular design, and adherence to Python best practices, making it an excellent learning resource or foundation for further development.
 
-## 🔑 Key Features
+## 🔑Key Features
 
 ### 📁 Project Management
 Create, Edit, and Delete Projects: Easily manage your projects with full CRUD functionality.
-
 ### 📝 Task Management: 
 Add, modify, and remove tasks within projects, ensuring seamless organization.
-
 ### 🕒Status Tracking: 
 Monitor task progress with customizable statuses (todo, doing, done).
 
