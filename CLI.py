@@ -1,81 +1,61 @@
 from Storage import Memory
 from Services import ProjectTaskService
-from models import Project, Task, TaskStatus
 
 class ToDoManager:
     def __init__(self):
         self.storage = Memory()
         self.project_service = ProjectTaskService(self.storage)
 
-    def create_project(self, name: str, description: str):
-        state, message = self.project_service.add_project(name, description)
-        print(message, "", sep="\n")
+    def create_project(self, name: str, description: str = ""):
+        ok, msg = self.project_service.add_project(name, description)
+        print(msg, end="\n\n")
 
-    def view_project(self,index):
-        project=self.project_service.find_project(index)
-        if project:
-            print(index, "_")
-            print(f"Name: {project.name}")
-            if project.description:
-                print(f"Description: {project.description}")
-            print(f"Created: {project.created_time}")
-            print("____________________")
-            print()
-
-    def edit_project(self, index: int, new_name: str, description: str):
-        state, message = self.project_service.edit_project(index, new_name, description)
-        print(message, "", sep="\n")
-
-    def print_projects(self)->bool:
-        projects = self.project_service.print_all_projects()
-        if not projects:
+    def print_projects(self) -> bool:
+        projs = self.project_service.print_all_projects()
+        if not projs:
             print("No projects found\n")
             return False
-        else:
-            print("\n#### Projects ####\n")
-            i:int
-            i=1
-            for project in projects:
-                print(i,"_")
-                print(f"Name: {project.name}")
-                if project.description:
-                    print(f"Description: {project.description}")
-                print(f"Created: {project.created_time}")
-                print("____________________")
-                print()
-                i=i+1
-            return True
+        print("#### Projects ####\n")
+        for i, p in enumerate(projs, start=1):
+            print(f"{i}. {p.name}")
+            if p.description:
+                print(f"   Description: {p.description}")
+            print(f"   Created: {p.created_time}\n")
+        return True
 
-    def create_task(self, index: int, title: str, description: str):
-        state, message = self.project_service.create_task(index, title, description)
-        print(message)
+    def view_project(self, index: int):
+        proj = self.project_service.find_project(index)
+        if not proj:
+            print("Project not found\n")
+            return
+        print(f"{index}. {proj.name}")
+        if proj.description:
+            print(f"   Description: {proj.description}")
+        print(f"   Created: {proj.created_time}\n")
 
-    def edit_task(self, index: int, task_title: str, new_title: str, description: str, status: str):
-        ok, message = self.project_service.edit_task(index, task_title, new_title, description, status)
-        print(message)
+    def edit_project(self, index: int, new_name: str = None, new_description: str = None):
+        ok, msg = self.project_service.edit_project(index, new_name, new_description)
+        print(msg, end="\n\n")
 
-    def delete_task(self, index: int, task_title: str):
-        ok, message = self.project_service.delete_task(index, task_title)
-        print(message)
+    def delete_project(self, index: int):
+        ok, msg = self.project_service.delete_project(index)
+        print(msg, end="\n\n")
+
+    def create_task(self, index: int, title: str, description: str = ""):
+        ok, msg = self.project_service.create_task(index, title, description)
+        print(msg, end="\n\n")
 
     def list_project_tasks(self, index: int):
         tasks = self.project_service.print_project_tasks(index)
-        if not tasks:
-            print("No tasks found for this project.")
+        if tasks is None:
+            print("Project not found\n")
             return
-        print(f"\n#### Tasks for project: {index} ####")
+        if not tasks:
+            print("No tasks found\n")
+            return
+        print(f"#### Tasks for project {index} ####\n")
         for t in tasks:
-            print(f"Title: {t.name} ")
+            print(f"- {t.name} (Status: {t.status}, Created: {t.created_time})")
             if t.description:
-                print(f"Description: {t.description}")
-            print(f"Status: {t.status}")
-            print(f"Created: {t.created_time}")
-            print("--------------")
+                print(f"   Description: {t.description}")
             print()
-
-    def find_project_by_name(self, index: int):
-        proj = self.project_service.find_project(index)
-        if proj:
-            print(f"Found project: {proj.name} (ID: {proj.id})")
-        else:
-            print("Project not found")

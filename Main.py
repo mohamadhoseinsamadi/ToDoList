@@ -19,8 +19,10 @@ def main_loop():
                 if index == -1:
                     continue
                 todo.view_project(index)
-                print("2: tasks of this project")
-                print("3: add task for this project")
+                print("1: edit project")
+                print("2: delete project")
+                print("3: tasks of this project")
+                print("4: add task for this project")
                 print("0: back")
                 user_input = input("Choose an option: ").strip()
                 print()
@@ -31,8 +33,10 @@ def main_loop():
                     new_desc=input("Enter new description (press Enter to skip): ")
                     todo.edit_project(index,new_name,new_desc)
                 elif user_input=="2":
-                    todo.list_project_tasks(index)
+                    todo.delete_project(index)
                 elif user_input=="3":
+                    todo.list_project_tasks(index)
+                elif user_input=="4":
                     name = input("Enter Task name: ").strip()
                     desc = input("Enter Task description (press Enter to skip): ")
                     todo.create_task(index,name,desc)

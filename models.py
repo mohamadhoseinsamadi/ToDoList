@@ -24,7 +24,7 @@ class Task:
         self.project_id = project_id
         self.name = name
         self.description = description
-        self.status = TaskStatus.TODO
+        self.status = "todo"
         self.created_time = datetime.now()
         deadline: Optional[datetime] = None
 
