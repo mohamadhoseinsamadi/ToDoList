@@ -1,4 +1,5 @@
 from CLI import ToDoManager
+from models import Project, Task, TaskStatus
 
 
 def main_loop():
@@ -16,7 +17,8 @@ def main_loop():
                     continue
                 print("enter index of project to open it, or -1 to return to the main menu")
                 index = int(input())
-                if index == -1:
+                if index <=0 or index>len(todo.storage.projects):
+                    print("invalid index")
                     continue
                 todo.view_project(index)
                 print("1: edit project")
@@ -35,11 +37,33 @@ def main_loop():
                 elif user_input=="2":
                     todo.delete_project(index)
                 elif user_input=="3":
-                    todo.list_project_tasks(index)
+                    okay=todo.list_project_tasks(index)
+                    if okay==False:
+                        continue
+                    print("enter index of task to open it, or -1 to return to the main menu")
+                    i = int(input())
+                    if i <= 0 or i > len(todo.storage.projects[index].tasks):
+                        print("invalid index")
+                        continue
+                    todo.view_task(index,i)
+                    print("1: edit task")
+                    print("2: delete task")
+                    print("0: back")
+                    user_input = input("Choose an option: ").strip()
+                    print()
+                    if user_input == "0":
+                        continue
+                    elif user_input=="1":
+                        pass
+                    elif user_input=="2":
+                        pass
+
                 elif user_input=="4":
                     name = input("Enter Task name: ").strip()
                     desc = input("Enter Task description (press Enter to skip): ")
-                    todo.create_task(index,name,desc)
+                    stat= input("Enter status (press Enter to skip): ")
+                    deadline=input("Enter deadline (press Enter to skip): ")
+                    todo.create_task(index,name,desc,stat,deadline)
 
             case "2":
                 name = input("Enter project name: ").strip()

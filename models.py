@@ -19,12 +19,12 @@ class TaskStatus(Enum):
 
 
 class Task:
-    def __init__(self, id: str, project_id: str, name: str, description: str = ""):
+    def __init__(self, id: str, project_id: str, name: str, description: str = "",status:TaskStatus=TaskStatus.TODO):
         self.id = id
         self.project_id = project_id
         self.name = name
         self.description = description
-        self.status = "todo"
+        self.status = status
         self.created_time = datetime.now()
         deadline: Optional[datetime] = None
 

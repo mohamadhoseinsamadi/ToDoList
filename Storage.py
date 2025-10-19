@@ -33,7 +33,9 @@ class Memory:
         idx = self.find_project_index(project_id)
         if idx == -1:
             return False
-        del self.projects[idx]
+        self.projects[idx].tasks.clear()
+        self.projects.pop(idx)
+
         return True
 
     def get_project(self, project_id: str) -> Optional[Project]:

@@ -1,5 +1,9 @@
+from datetime import datetime
+
 from Storage import Memory
 from Services import ProjectTaskService
+from models import Project, Task, TaskStatus
+
 
 class ToDoManager:
     def __init__(self):
@@ -41,21 +45,34 @@ class ToDoManager:
         ok, msg = self.project_service.delete_project(index)
         print(msg, end="\n\n")
 
-    def create_task(self, index: int, title: str, description: str = ""):
-        ok, msg = self.project_service.create_task(index, title, description)
+    def create_task(self, index: int, title: str, description: str = "", status=TaskStatus.TODO,
+                    deadline: datetime = None):
+        ok, msg = self.project_service.create_task(index, title, description, status)
         print(msg, end="\n\n")
 
-    def list_project_tasks(self, index: int):
+    def list_project_tasks(self, index: int)->bool:
         tasks = self.project_service.print_project_tasks(index)
         if tasks is None:
             print("Project not found\n")
-            return
+            return False
         if not tasks:
             print("No tasks found\n")
-            return
+            return False
         print(f"#### Tasks for project {index} ####\n")
         for t in tasks:
             print(f"- {t.name} (Status: {t.status}, Created: {t.created_time})")
             if t.description:
                 print(f"   Description: {t.description}")
             print()
+        return True
+    def view_task(self,project_index:int ,task_index:int)->bool:
+        tasks = self.project_service.print_project_tasks(project_index)
+        if not tasks:
+            print("No tasks found\n")
+            return False
+        t=tasks[task_index]
+        print(f"- {t.name} (Status: {t.status}, Created: {t.created_time})")
+        if t.description:
+            print(f"   Description: {t.description}")
+        print()
+        return True

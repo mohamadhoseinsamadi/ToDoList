@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import List, Optional, Tuple
 from models import Project, Task, TaskStatus
 from config import (
@@ -11,11 +12,22 @@ from config import (
 )
 from Storage import Memory
 
+
 class ProjectTaskService:
     def __init__(self, storage: Memory):
         self.storage = storage
 
+    def is_exist_project_by_name(self, name: str)->bool:
+        for project in self.storage.projects:
+            if project.name == name:
+                return True
+        return False
+
     def add_project(self, name: str, description: str) -> Tuple[bool, str]:
+        if name == "":
+            return False, "name can not be empty"
+        if self.is_exist_project_by_name(name):
+            return False, "name can not be same as other projects"
         if len(name) > MAX_PROJECT_NAME_LENGTH:
             return False, f"Project's name cannot exceed {MAX_PROJECT_NAME_LENGTH} characters"
         if len(description) > MAX_PROJECT_DESCRIPTION_LENGTH:
@@ -37,20 +49,22 @@ class ProjectTaskService:
         return self.storage.get_all_projects()
 
     def edit_project(
-        self,
-        index: int,
-        new_name: Optional[str] = None,
-        new_description: Optional[str] = None
+            self,
+            index: int,
+            new_name: Optional[str] = None,
+            new_description: Optional[str] = None
     ) -> Tuple[bool, str]:
         proj = self.find_project(index)
         if proj is None:
             return False, "Project not found"
-
         if new_name is not None:
             if len(new_name) > MAX_PROJECT_NAME_LENGTH:
                 return False, f"Project's name cannot exceed {MAX_PROJECT_NAME_LENGTH} characters"
-            self.storage.edit_project_name(proj.id, new_name)
-
+        if new_name == "":
+            return False, "name can not be empty"
+        if self.is_exist_project_by_name(new_name):
+            return False, "name can not be same as other projects"
+        self.storage.edit_project_name(proj.id, new_name)
         if new_description is not None:
             if len(new_description) > MAX_PROJECT_DESCRIPTION_LENGTH:
                 return False, f"Project's description cannot exceed {MAX_PROJECT_DESCRIPTION_LENGTH} characters"
@@ -65,7 +79,7 @@ class ProjectTaskService:
         success = self.storage.delete_project(proj.id)
         return (True, "Project deleted successfully") if success else (False, "Failed to delete project")
 
-    def create_task(self, index: int, title: str, description: str) -> Tuple[bool, str]:
+    def create_task(self, index: int, title: str, description: str,status=TaskStatus.TODO,deadline:datetime=None) -> Tuple[bool, str]:
         proj = self.find_project(index)
         if proj is None:
             return False, "Project not found"
@@ -73,7 +87,14 @@ class ProjectTaskService:
             return False, f"Task title cannot exceed {MAX_TASK_NAME_LENGTH} characters"
         if len(description) > MAX_TASK_DESCRIPTION_LENGTH:
             return False, f"Task description cannot exceed {MAX_TASK_DESCRIPTION_LENGTH} characters"
-
+        if status=="todo":
+            status=TaskStatus.TODO
+        elif status=="doing":
+            status=TaskStatus.DOING
+        elif status=="done":
+            status=TaskStatus.DONE
+        if not isinstance(status, TaskStatus):
+            return False, "Invalid status. Must be {todo,doing,done}."
         tasks = self.storage.get_project_tasks(proj.id)
         if len(tasks) >= MAX_NUMBER_OF_TASKS:
             return False, f"Cannot exceed max tasks per project: {MAX_NUMBER_OF_TASKS}"
@@ -82,6 +103,7 @@ class ProjectTaskService:
             id=str(uuid.uuid4()),
             project_id=proj.id,
             name=title,
+            status=status,
             description=description
         )
         self.storage.add_task_to_project(proj.id, task)
@@ -94,12 +116,12 @@ class ProjectTaskService:
         return None
 
     def edit_task(
-        self,
-        index: int,
-        identifier: str,
-        new_title: Optional[str] = None,
-        new_description: Optional[str] = None,
-        status: Optional[str] = None
+            self,
+            index: int,
+            identifier: str,
+            new_title: Optional[str] = None,
+            new_description: Optional[str] = None,
+            status: Optional[str] = None
     ) -> Tuple[bool, str]:
         proj = self.find_project(index)
         if proj is None:
