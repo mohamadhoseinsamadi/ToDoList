@@ -1,8 +1,8 @@
 from datetime import datetime
 
 from app.memory.storage import Memory
-from app.services.services import ProjectTaskService
-from app.models.project import Project
+from app.services.project_service import ProjectService
+from app.services.task_service import TaskService
 from app.models.task import Task, TaskStatus
 
 
@@ -10,7 +10,8 @@ from app.models.task import Task, TaskStatus
 class ToDoManager:
     def __init__(self):
         self.storage = Memory()
-        self.project_service = ProjectTaskService(self.storage)
+        self.project_service = ProjectService(self.storage)
+        self.task_service = TaskService(self.storage)
 
     def create_project(self, name: str, description: str = ""):
         ok, msg = self.project_service.add_project(name, description)
@@ -53,7 +54,7 @@ class ToDoManager:
 
     def create_task(self, index: int, title: str, description: str = "", status=TaskStatus.TODO,
                     deadline: datetime = None):
-        ok, msg = self.project_service.create_task(index, title, description, status)
+        ok, msg = self.task_service.create_task(index, title, description, status)
         print(msg, end="\n\n")
 
     def list_project_tasks(self, index: int) -> bool:
@@ -91,9 +92,9 @@ class ToDoManager:
         return True
 
     def delete_task(self, project_index: int, task_index: int):
-        ok, msg = self.project_service.delete_task(project_index,task_index)
+        ok, msg = self.task_service.delete_task(project_index,task_index)
         print(msg, end="\n\n")
 
     def edit_task(self, project_index: int, task_index: int, new_name, new_description,new_status,new_deadline):
-        state, message = self.project_service.edit_task(project_index,task_index, new_name, new_description,new_status,new_deadline)
+        state, message = self.task_service.edit_task(project_index,task_index, new_name, new_description,new_status,new_deadline)
         print(message, "", sep="\n")
