@@ -1,17 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional, List
-
-
-class Project:
-    def __init__(self, id, name, description=""):
-        self.id = id
-        self.name = name
-        self.description = description
-        self.tasks: List[Task] = []
-        self.created_time = datetime.now()
-
-
+from typing import Optional
 class TaskStatus(Enum):
     TODO = "todo"
     DOING = "doing"

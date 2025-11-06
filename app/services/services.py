@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime
 from typing import List, Optional, Tuple
-from app.models.models import Project, Task, TaskStatus
+from app.models.project import Project
+from app.models.task import Task, TaskStatus
 from app.config import (
     MAX_NUMBER_OF_PROJECTS,
     MAX_NUMBER_OF_TASKS,

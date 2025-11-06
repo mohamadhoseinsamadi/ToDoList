@@ -2,7 +2,9 @@ from datetime import datetime
 
 from app.memory.storage import Memory
 from app.services.services import ProjectTaskService
-from app.models.models import Project, Task, TaskStatus
+from app.models.project import Project
+from app.models.task import Task, TaskStatus
+
 
 
 class ToDoManager:
