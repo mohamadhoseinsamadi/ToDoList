@@ -1,5 +1,5 @@
-from CLI import ToDoManager
-from models import Project, Task, TaskStatus
+from app.cli.cli import ToDoManager
+from app.models.models import Project, Task, TaskStatus
 
 
 def main_loop():

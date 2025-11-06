@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
 from typing import List, Optional, Tuple
-from models import Project, Task, TaskStatus
-from config import (
+from app.models.models import Project, Task, TaskStatus
+from app.config import (
     MAX_NUMBER_OF_PROJECTS,
     MAX_NUMBER_OF_TASKS,
     MAX_PROJECT_NAME_LENGTH,
@@ -10,7 +10,7 @@ from config import (
     MAX_TASK_NAME_LENGTH,
     MAX_TASK_DESCRIPTION_LENGTH,
 )
-from Storage import Memory
+from app.memory.storage import Memory
 
 
 class ProjectTaskService:

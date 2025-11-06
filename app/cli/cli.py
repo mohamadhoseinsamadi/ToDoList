@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from Storage import Memory
-from Services import ProjectTaskService
-from models import Project, Task, TaskStatus
+from app.memory.storage import Memory
+from app.services.services import ProjectTaskService
+from app.models.models import Project, Task, TaskStatus
 
 
 class ToDoManager:

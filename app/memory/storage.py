@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Optional
-from models import Project, Task, TaskStatus
+from app.models.models import Project, Task, TaskStatus
 
 class Memory:
     def __init__(self):
