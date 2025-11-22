@@ -1,8 +1,16 @@
-from app.cli.cli import ToDoManager
+from app.cli.console import ToDoManager
+from app.repositories.project_repository import InMemoryProjectRepository
+from app.services.project_service import ProjectService
+from app.repositories.task_repository import InMemoryTaskRepository
+from app.services.task_service import TaskService
 
 
 def main_loop():
-    manager = ToDoManager()
+    project_repo = InMemoryProjectRepository()
+    project_service = ProjectService(project_repo)
+    task_repo = InMemoryTaskRepository()
+    task_service = TaskService(task_repo, project_repo)
+    manager = ToDoManager(project_service, task_service)
 
     while True:
         print("=== Main Menu ===")

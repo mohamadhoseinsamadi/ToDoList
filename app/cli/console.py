@@ -6,10 +6,9 @@ from app.services.task_service import TaskService
 
 
 class ToDoManager:
-    def __init__(self):
-        self.storage = Memory()
-        self.project_service = ProjectService(self.storage)
-        self.task_service = TaskService(self.storage)
+    def __init__(self, project_service: ProjectService, task_service: TaskService):
+        self.project_service = project_service
+        self.task_service = task_service
 
     def _get_input(self, prompt: str, required=True) -> str | None:
         value = input(prompt).strip()
@@ -49,7 +48,7 @@ class ToDoManager:
         print("-" * 20 + "\n")
         return True
 
-    def view_project_details(self, index: int)->bool:
+    def view_project_details(self, index: int):
         proj = self.project_service.find_project(index)
         if not proj:
             print("Project not found.\n")
@@ -119,7 +118,9 @@ class ToDoManager:
 
         status_str = input("Status (todo/doing/done): ").strip()
 
-        ok, msg = self.task_service.create_task(project_index, title, desc, status=status_str, deadline=deadline)
+        proj = self.project_service.find_project(project_index)
+
+        ok, msg = self.task_service.create_task(proj.id, title, desc, status=status_str, deadline=deadline)
         print(f">> {msg}\n")
 
     def handle_edit_task(self, p_index: int, t_index: int):

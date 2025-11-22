@@ -7,18 +7,17 @@ from app.config import (
     MAX_PROJECT_NAME_LENGTH,
     MAX_PROJECT_DESCRIPTION_LENGTH,
 )
-from app.memory.storage import Memory
-
+from app.repositories.project_repository import ProjectRepository
 
 class ProjectService:
-    def __init__(self, storage: Memory):
-        self.storage = storage
+    def __init__(self, repo: ProjectRepository):
+        self.repo = repo
 
     def check_project_exists(self, index: int) -> bool:
         return self.find_project(index) is not None
 
     def _find_project_by_index(self, index: int) -> Optional[Project]:
-        projects = self.storage.get_all_projects()
+        projects = self.repo.get_all_projects()
         if index < 1 or index > len(projects):
             return None
         return projects[index - 1]
@@ -33,19 +32,19 @@ class ProjectService:
         if len(description) > MAX_PROJECT_DESCRIPTION_LENGTH:
             return False, f"Project description cannot exceed {MAX_PROJECT_DESCRIPTION_LENGTH} characters"
 
-        if self.storage.project_exists(name):
+        if self.repo.project_exists(name):
             return False, "Project name already exists"
 
-        current_count = len(self.storage.get_all_projects())
+        current_count = len(self.repo.get_all_projects())
         if current_count >= MAX_NUMBER_OF_PROJECTS:
             return False, f"Cannot exceed maximum number of projects: {MAX_NUMBER_OF_PROJECTS}"
 
         proj = Project(id=str(uuid.uuid4()), name=name, description=description)
-        self.storage.add_project(proj)
+        self.repo.add_project(proj)
         return True, "Project created successfully"
 
     def print_all_projects(self) -> List[Project]:
-        return self.storage.get_all_projects()
+        return self.repo.get_all_projects()
 
     def find_project(self, index: int) -> Optional[Project]:
         return self._find_project_by_index(index)
@@ -63,15 +62,15 @@ class ProjectService:
             if len(s_name) > MAX_PROJECT_NAME_LENGTH:
                 return False, f"Name exceeds max length ({MAX_PROJECT_NAME_LENGTH})"
 
-            if s_name != proj.name and self.storage.project_exists(s_name):
+            if s_name != proj.name and self.repo.project_exists(s_name):
                 return False, "Project name already exists"
 
-            self.storage.edit_project_name(proj.id, s_name)
+            self.repo.edit_project_name(proj.id, s_name)
 
         if new_description is not None:
             if len(new_description) > MAX_PROJECT_DESCRIPTION_LENGTH:
                 return False, f"Description exceeds max length ({MAX_PROJECT_DESCRIPTION_LENGTH})"
-            self.storage.edit_project_description(proj.id, new_description)
+            self.repo.edit_project_description(proj.id, new_description)
 
         return True, "Project updated successfully"
 
@@ -80,9 +79,9 @@ class ProjectService:
         if proj is None:
             return False, "Project not found"
 
-        success = self.storage.delete_project(proj.id)
+        success = self.repo.delete_project(proj.id)
         return (True, "Project deleted successfully") if success else (False, "Failed to delete project")
 
     def print_project_tasks(self, index: int) -> Optional[List[Task]]:
         proj = self._find_project_by_index(index)
-        return self.storage.get_project_tasks(proj.id) if proj else None
+        return self.repo.get_project_tasks(proj.id) if proj else None

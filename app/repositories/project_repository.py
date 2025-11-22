@@ -1,10 +1,53 @@
-from datetime import datetime
+from abc import ABC, abstractmethod
 from typing import List, Optional
 from app.models.project import Project
-from app.models.task import Task, TaskStatus
+from app.models.task import Task
 
 
-class Memory:
+class ProjectRepository(ABC):
+
+    @abstractmethod
+    def find_project_index(self, project_id: str) -> int:
+        pass
+
+    @abstractmethod
+    def add_project(self, project: Project) -> None:
+        pass
+
+    @abstractmethod
+    def edit_project_name(self, project_id: str, new_name: str) -> bool:
+        pass
+
+    @abstractmethod
+    def edit_project_description(self, project_id: str, new_desc: str) -> bool:
+        pass
+
+    @abstractmethod
+    def delete_project(self, project_id: str) -> bool:
+        pass
+
+    @abstractmethod
+    def get_project(self, project_id: str) -> Optional[Project]:
+        pass
+
+    @abstractmethod
+    def get_all_projects(self) -> List[Project]:
+        pass
+
+    @abstractmethod
+    def project_exists(self, name: str) -> bool:
+        pass
+
+    @abstractmethod
+    def add_task_to_project(self, project_id: str, task: Task) -> bool:
+        pass
+
+    @abstractmethod
+    def get_project_tasks(self, project_id: str) -> List[Task]:
+        pass
+
+
+class InMemoryProjectRepository(ProjectRepository):
     def __init__(self):
         self.projects: List[Project] = []
 
@@ -62,39 +105,3 @@ class Memory:
     def get_project_tasks(self, project_id: str) -> List[Task]:
         project = self.get_project(project_id)
         return project.tasks if project else []
-
-    def update_task(
-            self,
-            project_id: str,
-            task_id: str,
-            title: Optional[str] = None,
-            description: Optional[str] = None,
-            status: Optional[TaskStatus] = None,
-            deadline: Optional[datetime] = None
-    ) -> bool:
-
-        project = self.get_project(project_id)
-        if project is None:
-            return False
-
-        for t in project.tasks:
-            if t.id == task_id:
-                if title is not None:
-                    t.name = title
-                if description is not None:
-                    t.description = description
-                if status is not None:
-                    t.status = status
-                if deadline is not None:
-                    t.deadline = deadline
-                return True
-
-        return False
-
-    def delete_task(self, task_id: str) -> bool:
-        for proj in self.projects:
-            for i, t in enumerate(proj.tasks):
-                if t.id == task_id:
-                    del proj.tasks[i]
-                    return True
-        return False

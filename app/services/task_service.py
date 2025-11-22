@@ -1,27 +1,26 @@
 import uuid
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 from app.models.task import Task, TaskStatus
 from app.config import (
-    MAX_NUMBER_OF_PROJECTS,
     MAX_NUMBER_OF_TASKS,
-    MAX_PROJECT_NAME_LENGTH,
-    MAX_PROJECT_DESCRIPTION_LENGTH,
     MAX_TASK_NAME_LENGTH,
     MAX_TASK_DESCRIPTION_LENGTH,
 )
-from app.memory.storage import Memory
+from app.repositories.task_repository import TaskRepository
+from app.repositories.project_repository import ProjectRepository
 
 
 class TaskService:
-    def __init__(self, storage: Memory):
-        self.storage = storage
+    def __init__(self, task_repo: TaskRepository, project_repo: ProjectRepository):
+        self.task_repo = task_repo
+        self.project_repo = project_repo
 
     def check_task_exists(self, project_index: int, task_index: int) -> bool:
         return self.find_task(project_index, task_index) is not None
 
     def _find_project_by_index(self, index: int):
-        projects = self.storage.get_all_projects()
+        projects = self.project_repo.get_all_projects()
         if index < 1 or index > len(projects):
             return None
         return projects[index - 1]
@@ -44,10 +43,10 @@ class TaskService:
 
         return None
 
-    def create_task(self, index: int, title: str, description: str, status=TaskStatus.TODO,
+    def create_task(self, project_id: str, title: str, description: str, status=TaskStatus.TODO,
                     deadline: datetime = None) -> Tuple[bool, str]:
-        proj = self._find_project_by_index(index)
-        if proj is None:
+
+        if not self.project_repo.project_exists(project_id):
             return False, "Project not found"
 
         if not title or title.strip() == "":
@@ -62,19 +61,19 @@ class TaskService:
         if parsed_status is None:
             return False, "Invalid status. Must be {todo, doing, done}."
 
-        tasks = self.storage.get_project_tasks(proj.id)
+        tasks = self.project_repo.get_project_tasks(project_id)
         if len(tasks) >= MAX_NUMBER_OF_TASKS:
             return False, f"Cannot exceed max tasks per project: {MAX_NUMBER_OF_TASKS}"
 
         task = Task(
             id=str(uuid.uuid4()),
-            project_id=proj.id,
+            project_id=project_id,
             name=title,
             status=parsed_status,
             description=description,
             deadline=deadline
         )
-        self.storage.add_task_to_project(proj.id, task)
+        self.project_repo.add_task_to_project(project_id, task)
         return True, "Task created successfully"
 
     def find_task(self, project_index, task_index) -> Optional[Task]:
@@ -82,7 +81,7 @@ class TaskService:
         if not proj:
             return None
 
-        tasks = self.storage.get_project_tasks(proj.id)
+        tasks = self.project_repo.get_project_tasks(proj.id)
 
         if task_index < 1 or task_index > len(tasks):
             return None
@@ -106,21 +105,21 @@ class TaskService:
                 return False, "Task name cannot be empty"
             if len(new_title) > MAX_TASK_NAME_LENGTH:
                 return False, f"Task title cannot exceed {MAX_TASK_NAME_LENGTH} characters"
-            self.storage.update_task(proj.id, task.id, title=new_title)
+            self.task_repo.update_task(proj.id, task.id, title=new_title)
 
         if new_description is not None:
             if len(new_description) > MAX_TASK_DESCRIPTION_LENGTH:
                 return False, f"Task description cannot exceed {MAX_TASK_DESCRIPTION_LENGTH} characters"
-            self.storage.update_task(proj.id, task.id, description=new_description)
+            self.task_repo.update_task(proj.id, task.id, description=new_description)
 
         if status is not None and status.strip() != "":
             parsed_status = self._parse_status(status)
             if parsed_status is None:
                 return False, "Invalid status type."
-            self.storage.update_task(proj.id, task.id, status=parsed_status)
+            self.task_repo.update_task(proj.id, task.id, status=parsed_status)
 
         if new_deadline is not None:
-            self.storage.update_task(proj.id, task.id, deadline=new_deadline)
+            self.task_repo.update_task(proj.id, task.id, deadline=new_deadline)
 
         return True, "Task updated successfully"
 
@@ -128,5 +127,5 @@ class TaskService:
         task = self.find_task(project_index, task_index)
         if task is None:
             return False, "Task not found"
-        success = self.storage.delete_task(task.id)
+        success = self.task_repo.delete_task(task.id)
         return (True, "Task deleted successfully") if success else (False, "Failed to delete Task")
