@@ -1,10 +1,8 @@
 from datetime import datetime
-
+from app.models.task import TaskStatus
 from app.memory.storage import Memory
 from app.services.project_service import ProjectService
 from app.services.task_service import TaskService
-from app.models.task import Task, TaskStatus
-
 
 
 class ToDoManager:
@@ -13,88 +11,129 @@ class ToDoManager:
         self.project_service = ProjectService(self.storage)
         self.task_service = TaskService(self.storage)
 
-    def create_project(self, name: str, description: str = ""):
-        ok, msg = self.project_service.add_project(name, description)
-        print(msg, end="\n\n")
+    def _get_input(self, prompt: str, required=True) -> str | None:
+        value = input(prompt).strip()
+        if required and not value:
+            print("Error: This field is required.")
+            return None
+        return value if value else None
+
+    def _get_int(self, prompt: str) -> int | None:
+        value = input(prompt).strip()
+        try:
+            return int(value)
+        except ValueError:
+            print("Error: Please enter a valid number.")
+            return None
+
+    def _get_date(self, prompt: str) -> datetime | None:
+        value = input(prompt).strip()
+        if not value:
+            return None
+        try:
+            return datetime.strptime(value, "%Y-%m-%d")
+        except ValueError:
+            print("Error: Invalid date format. Use YYYY-MM-DD.")
+            return None
 
     def print_projects(self) -> bool:
         projs = self.project_service.print_all_projects()
         if not projs:
-            print("No projects found\n")
+            print("No projects found.\n")
             return False
-        print("#### Projects ####\n")
+        print("\n#### Projects ####")
         for i, p in enumerate(projs, start=1):
-            print(i, "_",sep="")
-            print(f"Name: {p.name}")
+            print(f"{i}. {p.name} (Created: {p.created_time.strftime('%Y-%m-%d')})")
             if p.description:
-                print(f"Description: {p.description}")
-            print(f"Created: {p.created_time}")
-            print("____________________")
-            print()
+                print(f"   Desc: {p.description}")
+        print("-" * 20 + "\n")
         return True
 
-    def view_project(self, index: int):
+    def view_project_details(self, index: int)->bool:
         proj = self.project_service.find_project(index)
         if not proj:
-            print("Project not found\n")
+            print("Project not found.\n")
             return
-        print(f"project_{index}: {proj.name}")
-        if proj.description:
-            print(f"   Description: {proj.description}")
-        print(f"   Created at: {proj.created_time.year}/{proj.created_time.month}/{proj.created_time.day} "
-              f"{proj.created_time.hour}:{proj.created_time.minute}:{proj.created_time.second}\n")
 
-    def edit_project(self, index: int, new_name: str = None, new_description: str = None):
-        state, message = self.project_service.edit_project(index, new_name, new_description)
-        print(message, "", sep="\n")
-
-    def delete_project(self, index: int):
-        ok, msg = self.project_service.delete_project(index)
-        print(msg, end="\n\n")
-
-    def create_task(self, index: int, title: str, description: str = "", status=TaskStatus.TODO,
-                    deadline: datetime = None):
-        ok, msg = self.task_service.create_task(index, title, description, status)
-        print(msg, end="\n\n")
+        print(f"\n=== Project Details ===")
+        print(f"Name: {proj.name}")
+        print(f"Description: {proj.description}")
+        print(f"Created At: {proj.created_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print("=======================\n")
 
     def list_project_tasks(self, index: int) -> bool:
         tasks = self.project_service.print_project_tasks(index)
         if tasks is None:
-            print("Project not found\n")
+            print("Project not found.\n")
             return False
         if not tasks:
-            print("No tasks found\n")
+            print("No tasks in this project.\n")
             return False
-        print(f"#### Tasks for project {index} ####\n")
+
+        print(f"\n#### Tasks for Project {index} ####")
         for i, t in enumerate(tasks, start=1):
-            print(f"task_{i}: {t.name} ")
-            print(f"   Status: {t.status}")
-            print(f"   Created at: {t.created_time.year}/{t.created_time.month}/{t.created_time.day} "
-                  f"{t.created_time.hour}:{t.created_time.minute}:{t.created_time.second}")
-            if t.description:
-                print(f"   Description: {t.description}")
-            print()
+            deadline_str = t.deadline.strftime('%Y-%m-%d') if t.deadline else "No Deadline"
+            print(f"{i}. {t.name} ({t.status.value}) - Due: {deadline_str}")
+        print("-" * 20 + "\n")
         return True
 
-    def view_task(self, project_index: int, task_index: int) -> bool:
-        tasks = self.project_service.print_project_tasks(project_index)
-        if not tasks:
-            print("No tasks found\n")
-            return False
-        t = tasks[task_index-1]
-        print(f"task_{task_index}: {t.name} ")
-        print(f"   Status: {t.status}")
-        print(f"   Created at: {t.created_time.year}/{t.created_time.month}/{t.created_time.day} "
-              f"{t.created_time.hour}:{t.created_time.minute}:{t.created_time.second}")
-        if t.description:
-            print(f"   Description: {t.description}")
-        print()
-        return True
+    def view_task_details(self, project_index: int, task_index: int):
+        task = self.task_service.find_task(project_index, task_index)
+        if not task:
+            print("Task not found.\n")
+            return
 
-    def delete_task(self, project_index: int, task_index: int):
-        ok, msg = self.task_service.delete_task(project_index,task_index)
-        print(msg, end="\n\n")
+        print(f"\n--- Task Details ---")
+        print(f"Title:       {task.name}")
+        print(f"Status:      {task.status.value}")
+        print(f"Description: {task.description}")
+        deadline_str = task.deadline.strftime('%Y-%m-%d') if task.deadline else "None"
+        print(f"Deadline:    {deadline_str}")
+        print(f"Created:     {task.created_time.strftime('%Y-%m-%d %H:%M')}")
+        print("--------------------\n")
 
-    def edit_task(self, project_index: int, task_index: int, new_name, new_description,new_status,new_deadline):
-        state, message = self.task_service.edit_task(project_index,task_index, new_name, new_description,new_status,new_deadline)
-        print(message, "", sep="\n")
+    def handle_add_project(self):
+        name = self._get_input("Enter project name: ")
+        if not name: return
+        desc = input("Enter description (optional): ").strip()
+        ok, msg = self.project_service.add_project(name, desc)
+        print(f">> {msg}\n")
+
+    def handle_edit_project(self, index: int):
+        new_name = input("New name (Press Enter to skip): ").strip() or None
+        new_desc = input("New description (Press Enter to skip): ").strip() or None
+
+        if new_name is None and new_desc is None:
+            print("No changes made.")
+            return
+
+        ok, msg = self.project_service.edit_project(index, new_name, new_desc)
+        print(f">> {msg}\n")
+
+    def handle_add_task(self, project_index: int):
+        title = self._get_input("Enter task title: ")
+        if not title: return
+        desc = input("Enter description (optional): ").strip()
+
+        deadline = self._get_date("Enter deadline (YYYY-MM-DD) or skip: ")
+
+        status_str = input("Status (todo/doing/done): ").strip()
+
+        ok, msg = self.task_service.create_task(project_index, title, desc, status=status_str, deadline=deadline)
+        print(f">> {msg}\n")
+
+    def handle_edit_task(self, p_index: int, t_index: int):
+        print("Leave fields empty to keep current values.")
+        new_title = input("New title: ").strip() or None
+        new_desc = input("New description: ").strip() or None
+        new_status = input("New status (todo/doing/done): ").strip() or None
+        new_deadline = self._get_date("New deadline (YYYY-MM-DD): ")
+
+        ok, msg = self.task_service.edit_task(
+            p_index, t_index,
+            new_title=new_title,
+            new_description=new_desc,
+            status=new_status,
+            new_deadline=new_deadline
+        )
+        print(f">> {msg}\n")

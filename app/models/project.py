@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import List
-
+from app.models.task import Task
 class Project:
-    def __init__(self, id, name, description=""):
+    def __init__(self, id: str, name: str, description: str = ""):
         self.id = id
         self.name = name
         self.description = description

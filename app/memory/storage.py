@@ -63,13 +63,15 @@ class Memory:
         return project.tasks if project else []
 
     def update_task(
-        self,
-        project_id: str,
-        task_id: str,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        status: Optional[str] = None
+            self,
+            project_id: str,
+            task_id: str,
+            title: Optional[str] = None,
+            description: Optional[str] = None,
+            status: Optional[TaskStatus] = None,
+            deadline: Optional[datetime] = None
     ) -> bool:
+
         project = self.get_project(project_id)
         if project is None:
             return False
@@ -81,13 +83,13 @@ class Memory:
                 if description is not None:
                     t.description = description
                 if status is not None:
-                    try:
-                        t.status = TaskStatus(status)
-                    except ValueError:
-                        return False
+                    t.status = status
+                if deadline is not None:
+                    t.deadline = deadline
                 return True
 
         return False
+
 
     def delete_task(self, task_id: str) -> bool:
         for proj in self.projects:

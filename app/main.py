@@ -1,95 +1,85 @@
 from app.cli.cli import ToDoManager
 
+
 def main_loop():
-    todo = ToDoManager()
+    manager = ToDoManager()
+
     while True:
-        print("1: view project list")
-        print("2: add project")
-        print("0: exit")
-        user_input = input("Choose an option: ").strip()
-        print()
-        match user_input:
-            case "1":
-                ok=todo.print_projects()
-                if ok==False:
-                    continue
-                print("enter index of project to open it, or -1 to return to the main menu")
-                index = int(input())
-                if(index==-1):
-                    continue
-                if index <1 or index>len(todo.storage.projects):
-                    print("invalid index")
-                    continue
-                while True:
-                    todo.view_project(index)
-                    print("1: edit project")
-                    print("2: delete project")
-                    print("3: tasks of this project")
-                    print("4: add task for this project")
-                    print("0: back")
-                    user_input = input("Choose an option: ").strip()
-                    print()
-                    if user_input=="0":
+        print("=== Main Menu ===")
+        print("1. List Projects")
+        print("2. Create Project")
+        print("0. Exit")
+
+        choice = input("\nChoose an option: ").strip()
+
+        if choice == "1":
+            if not manager.print_projects():
+                continue
+
+            p_idx = manager._get_int("Enter project index to open (or 0 to back): ")
+            if p_idx is None or p_idx == 0:
+                continue
+
+            if not manager.project_service.check_project_exists(p_idx):
+                print("Error: Project not found.")
+                continue
+
+            while True:
+                manager.view_project_details(p_idx)
+                print("1. Edit Project")
+                print("2. Delete Project")
+                print("3. List Tasks")
+                print("4. Add Task")
+                print("0. Back")
+
+                p_choice = input("\nChoose option: ").strip()
+
+                if p_choice == "0":
+                    break
+                elif p_choice == "1":
+                    manager.handle_edit_project(p_idx)
+                elif p_choice == "2":
+                    confirm = input("Are you sure? All tasks will be deleted (y/n): ")
+                    if confirm.lower() == 'y':
+                        ok, msg = manager.project_service.delete_project(p_idx)
+                        print(f">> {msg}\n")
                         break
-                    elif user_input=="1":
-                        new_name=input("Enter new name: ")
-                        new_desc=input("Enter new description (press Enter to skip): ")
-                        print()
-                        todo.edit_project(index,new_name,new_desc)
-                    elif user_input=="2":
-                        todo.delete_project(index)
-                        break
-                    elif user_input=="3":
-                        okay=todo.list_project_tasks(index)
-                        if okay==False:
+                elif p_choice == "3":
+                    if manager.list_project_tasks(p_idx):
+                        t_idx = manager._get_int("Enter task index to view/edit (or 0 to back): ")
+                        if t_idx is None or t_idx == 0: continue
+
+                        if not manager.task_service.check_task_exists(p_idx, t_idx):
+                            print("Error: Task not found.")
                             continue
-                        print("enter index of task to open it, or -1 to return to the main menu")
-                        i = int(input())
-                        if i == -1:
-                            continue
-                        if i < 1 or i > len(todo.storage.projects[index-1].tasks):
-                            print("invalid index")
-                            continue
+
                         while True:
-                            todo.view_task(index,i)
-                            print("1: edit task")
-                            print("2: delete task")
-                            print("0: back")
-                            user_input = input("Choose an option: ").strip()
-                            print()
-                            if user_input == "0":
+                            manager.view_task_details(p_idx, t_idx)
+                            print("1. Edit Task")
+                            print("2. Delete Task")
+                            print("0. Back")
+                            t_choice = input("Choose: ").strip()
+
+                            if t_choice == "0":
                                 break
-                            elif user_input=="1":
-                                new_name = input("Enter Task name: ").strip()
-                                new_desc = input("Enter Task description (press Enter to skip): ")
-                                new_stat = input("Enter status (press Enter to skip): ")
-                                new_deadline = input("Enter deadline (press Enter to skip): ")
-                                print()
-                                todo.edit_task(index,i,new_name,new_desc,new_stat,new_deadline)
-                            elif user_input=="2":
-                                todo.delete_task(index,i)
+                            elif t_choice == "1":
+                                manager.handle_edit_task(p_idx, t_idx)
+                            elif t_choice == "2":
+                                ok, msg = manager.task_service.delete_task(p_idx, t_idx)
+                                print(f">> {msg}\n")
                                 break
 
-                    elif user_input=="4":
-                        name = input("Enter Task name: ").strip()
-                        desc = input("Enter Task description (press Enter to skip): ")
-                        stat= input("Enter status (press Enter to skip): ")
-                        deadline=input("Enter deadline (press Enter to skip): ")
-                        print()
-                        todo.create_task(index,name,desc,stat,deadline)
+                elif p_choice == "4":
+                    manager.handle_add_task(p_idx)
 
+        elif choice == "2":
+            manager.handle_add_project()
 
-            case "2":
-                name = input("Enter project name: ").strip()
-                desc = input("Enter project description (press Enter to skip): ")
-                print()
-                todo.create_project(name, desc)
-
-            case "0":
-                print("Exiting...")
-                break
-            case _:
-                print("invalid command")
+        elif choice == "0":
+            print("exiting...")
+            break
+        else:
+            print("Invalid command.")
 
 
 if __name__ == "__main__":
