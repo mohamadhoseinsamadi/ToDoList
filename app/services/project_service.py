@@ -1,13 +1,13 @@
 import uuid
 from typing import List, Optional, Tuple
 from app.models.project import Project
-from app.models.task import Task
 from app.config import (
     MAX_NUMBER_OF_PROJECTS,
     MAX_PROJECT_NAME_LENGTH,
     MAX_PROJECT_DESCRIPTION_LENGTH,
 )
 from app.repositories.project_repository import ProjectRepository
+
 
 class ProjectService:
     def __init__(self, repo: ProjectRepository):
@@ -81,7 +81,3 @@ class ProjectService:
 
         success = self.repo.delete_project(proj.id)
         return (True, "Project deleted successfully") if success else (False, "Failed to delete project")
-
-    def print_project_tasks(self, index: int) -> Optional[List[Task]]:
-        proj = self._find_project_by_index(index)
-        return self.repo.get_project_tasks(proj.id) if proj else None

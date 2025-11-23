@@ -9,7 +9,7 @@ def main_loop():
     project_repo = InMemoryProjectRepository()
     project_service = ProjectService(project_repo)
     task_repo = InMemoryTaskRepository()
-    task_service = TaskService(task_repo, project_repo)
+    task_service = TaskService(task_repo)
     manager = ToDoManager(project_service, task_service)
 
     while True:
@@ -55,10 +55,7 @@ def main_loop():
                 elif p_choice == "3":
                     if manager.list_project_tasks(p_idx):
                         t_idx = manager._get_int("Enter task index to view/edit (or 0 to back): ")
-                        if t_idx is None or t_idx == 0: continue
-
-                        if not manager.task_service.check_task_exists(p_idx, t_idx):
-                            print("Error: Task not found.")
+                        if t_idx is None or t_idx == 0:
                             continue
 
                         while True:
@@ -73,8 +70,7 @@ def main_loop():
                             elif t_choice == "1":
                                 manager.handle_edit_task(p_idx, t_idx)
                             elif t_choice == "2":
-                                ok, msg = manager.task_service.delete_task(p_idx, t_idx)
-                                print(f">> {msg}\n")
+                                manager.delete_task(p_idx, t_idx)
                                 break
 
                 elif p_choice == "4":

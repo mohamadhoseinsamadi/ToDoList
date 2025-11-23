@@ -1,6 +1,4 @@
 from datetime import datetime
-from app.models.task import TaskStatus
-from app.memory.storage import Memory
 from app.services.project_service import ProjectService
 from app.services.task_service import TaskService
 
@@ -60,16 +58,17 @@ class ToDoManager:
         print(f"Created At: {proj.created_time.strftime('%Y-%m-%d %H:%M:%S')}")
         print("=======================\n")
 
-    def list_project_tasks(self, index: int) -> bool:
-        tasks = self.project_service.print_project_tasks(index)
-        if tasks is None:
+    def list_project_tasks(self, project_index: int) -> bool:
+        proj = self.project_service.find_project(index=project_index)
+        if proj is None:
             print("Project not found.\n")
             return False
+        tasks = self.task_service.print_project_tasks(project_id=proj.id)
         if not tasks:
             print("No tasks in this project.\n")
             return False
 
-        print(f"\n#### Tasks for Project {index} ####")
+        print(f"\n#### Tasks for Project {project_index} ####")
         for i, t in enumerate(tasks, start=1):
             deadline_str = t.deadline.strftime('%Y-%m-%d') if t.deadline else "No Deadline"
             print(f"{i}. {t.name} ({t.status.value}) - Due: {deadline_str}")
@@ -77,7 +76,8 @@ class ToDoManager:
         return True
 
     def view_task_details(self, project_index: int, task_index: int):
-        task = self.task_service.find_task(project_index, task_index)
+        proj = self.project_service.find_project(index=project_index)
+        task = self.task_service.find_task(project_id=proj.id, task_index=task_index)
         if not task:
             print("Task not found.\n")
             return
@@ -93,7 +93,8 @@ class ToDoManager:
 
     def handle_add_project(self):
         name = self._get_input("Enter project name: ")
-        if not name: return
+        if not name:
+            return
         desc = input("Enter description (optional): ").strip()
         ok, msg = self.project_service.add_project(name, desc)
         print(f">> {msg}\n")
@@ -123,7 +124,8 @@ class ToDoManager:
         ok, msg = self.task_service.create_task(proj.id, title, desc, status=status_str, deadline=deadline)
         print(f">> {msg}\n")
 
-    def handle_edit_task(self, p_index: int, t_index: int):
+    def handle_edit_task(self, project_index: int, task_index: int):
+        proj = self.project_service.find_project(index=project_index)
         print("Leave fields empty to keep current values.")
         new_title = input("New title: ").strip() or None
         new_desc = input("New description: ").strip() or None
@@ -131,10 +133,15 @@ class ToDoManager:
         new_deadline = self._get_date("New deadline (YYYY-MM-DD): ")
 
         ok, msg = self.task_service.edit_task(
-            p_index, t_index,
+            project_id=proj.id, task_index=task_index,
             new_title=new_title,
             new_description=new_desc,
             status=new_status,
             new_deadline=new_deadline
         )
+        print(f">> {msg}\n")
+
+    def delete_task(self, project_index: int, task_index: int):
+        proj = self.project_service.find_project(index=project_index)
+        ok, msg = self.task_service.delete_task(project_id=proj.id, task_index=task_index)
         print(f">> {msg}\n")

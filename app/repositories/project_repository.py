@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 from app.models.project import Project
-from app.models.task import Task
 
 
 class ProjectRepository(ABC):
@@ -36,14 +35,6 @@ class ProjectRepository(ABC):
 
     @abstractmethod
     def project_exists(self, name: str) -> bool:
-        pass
-
-    @abstractmethod
-    def add_task_to_project(self, project_id: str, task: Task) -> bool:
-        pass
-
-    @abstractmethod
-    def get_project_tasks(self, project_id: str) -> List[Task]:
         pass
 
 
@@ -94,14 +85,3 @@ class InMemoryProjectRepository(ProjectRepository):
 
     def project_exists(self, name: str) -> bool:
         return any(p.name.lower() == name.lower() for p in self.projects)
-
-    def add_task_to_project(self, project_id: str, task: Task) -> bool:
-        project = self.get_project(project_id)
-        if project is None:
-            return False
-        project.tasks.append(task)
-        return True
-
-    def get_project_tasks(self, project_id: str) -> List[Task]:
-        project = self.get_project(project_id)
-        return project.tasks if project else []
