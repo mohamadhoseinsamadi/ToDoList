@@ -1,21 +1,27 @@
+from sqlalchemy import Column, String, DateTime, ForeignKey, Enum as SQLEnum
+from sqlalchemy.orm import relationship
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+import enum
+from app.db.base import Base
 
 
-class TaskStatus(Enum):
+class TaskStatus(str, enum.Enum):
     TODO = "todo"
     DOING = "doing"
     DONE = "done"
 
 
-class Task:
-    def __init__(self, id: str, project_id: str, name: str, description: str = "",
-                 status: TaskStatus = TaskStatus.TODO, deadline: Optional[datetime] = None):
-        self.id = id
-        self.project_id = project_id
-        self.name = name
-        self.description = description
-        self.status = status
-        self.created_time = datetime.now()
-        self.deadline = deadline
+class Task(Base):
+    __tablename__ = "tasks"
+
+    id = Column(String, primary_key=True, index=True)
+    project_id = Column(String, ForeignKey("projects.id"), nullable=False)
+    name = Column(String(30), nullable=False)
+    description = Column(String(150), nullable=True)
+    status = Column(SQLEnum(TaskStatus), default=TaskStatus.TODO)
+    deadline = Column(DateTime, nullable=True)
+    created_time = Column(DateTime, default=datetime.now)
+
+    closed_at = Column(DateTime, nullable=True)
+
+    project = relationship("Project", back_populates="tasks")

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 from app.models.project import Project
-
+from sqlalchemy.orm import Session
 
 class ProjectRepository(ABC):
 
@@ -38,50 +38,51 @@ class ProjectRepository(ABC):
         pass
 
 
-class InMemoryProjectRepository(ProjectRepository):
-    def __init__(self):
-        self.projects: List[Project] = []
+class SqlAlchemyProjectRepository(ProjectRepository):
+    def __init__(self, session: Session):
+        self.session = session
+
+    def get_all_projects(self) -> List[Project]:
+        return self.session.query(Project).order_by(Project.created_time).all()
+
+    def add_project(self, project: Project) -> None:
+        self.session.add(project)
+        self.session.commit()
+        self.session.refresh(project)
 
     def find_project_index(self, project_id: str) -> int:
-        for idx, project in enumerate(self.projects):
-            if project.id == project_id:
+        projects = self.get_all_projects()
+        for idx, p in enumerate(projects):
+            if p.id == project_id:
                 return idx
         return -1
 
-    def add_project(self, project: Project) -> None:
-        self.projects.append(project)
-
-    def edit_project_name(self, project_id: str, new_name: str) -> bool:
-        idx = self.find_project_index(project_id)
-        if idx == -1:
-            return False
-        self.projects[idx].name = new_name
-        return True
-
-    def edit_project_description(self, project_id: str, new_desc: str) -> bool:
-        idx = self.find_project_index(project_id)
-        if idx == -1:
-            return False
-        self.projects[idx].description = new_desc
-        return True
-
-    def delete_project(self, project_id: str) -> bool:
-        idx = self.find_project_index(project_id)
-        if idx == -1:
-            return False
-        self.projects[idx].tasks.clear()
-        self.projects.pop(idx)
-
-        return True
+    def project_exists(self, name: str) -> bool:
+        return self.session.query(Project).filter(Project.name == name).first() is not None
 
     def get_project(self, project_id: str) -> Optional[Project]:
-        idx = self.find_project_index(project_id)
-        if idx == -1:
-            return None
-        return self.projects[idx]
+        return self.session.query(Project).filter(Project.id == project_id).first()
 
-    def get_all_projects(self) -> List[Project]:
-        return self.projects
+    def delete_project(self, project_id: str) -> bool:
+        project = self.get_project(project_id)
+        if project:
+            self.session.delete(project)  # Cascade delete در مدل هندل می‌شود
+            self.session.commit()
+            return True
+        return False
 
-    def project_exists(self, name: str) -> bool:
-        return any(p.name.lower() == name.lower() for p in self.projects)
+    def edit_project_name(self, project_id: str, new_name: str) -> bool:
+        project = self.get_project(project_id)
+        if project:
+            project.name = new_name
+            self.session.commit()
+            return True
+        return False
+
+    def edit_project_description(self, project_id: str, new_desc: str) -> bool:
+        project = self.get_project(project_id)
+        if project:
+            project.description = new_desc
+            self.session.commit()
+            return True
+        return False

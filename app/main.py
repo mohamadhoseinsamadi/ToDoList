@@ -1,89 +1,104 @@
 from app.cli.console import ToDoManager
-from app.repositories.project_repository import InMemoryProjectRepository
 from app.services.project_service import ProjectService
-from app.repositories.task_repository import InMemoryTaskRepository
 from app.services.task_service import TaskService
+import os
+from dotenv import load_dotenv
+from app.db.session import SessionLocal
+from app.cli.console import ToDoManager
+from app.services.project_service import ProjectService
+from app.services.task_service import TaskService
+from app.repositories.project_repository import SqlAlchemyProjectRepository
+from app.repositories.task_repository import SqlAlchemyTaskRepository
 
 
 def main_loop():
-    project_repo = InMemoryProjectRepository()
-    project_service = ProjectService(project_repo)
-    task_repo = InMemoryTaskRepository()
-    task_service = TaskService(task_repo)
-    manager = ToDoManager(project_service, task_service)
+    db_session = SessionLocal()
 
-    while True:
-        print("=== Main Menu ===")
-        print("1. List Projects")
-        print("2. Create Project")
-        print("0. Exit")
+    try:
 
-        choice = input("\nChoose an option: ").strip()
+        project_repo = SqlAlchemyProjectRepository(db_session)
+        task_repo = SqlAlchemyTaskRepository(db_session)
 
-        if choice == "1":
-            if not manager.print_projects():
-                continue
+        project_service = ProjectService(project_repo)
+        task_service = TaskService(task_repo)
 
-            p_idx = manager._get_int("Enter project index to open (or 0 to back): ")
-            if p_idx is None or p_idx == 0:
-                continue
+        manager = ToDoManager(project_service, task_service)
 
-            if not manager.project_service.check_project_exists(p_idx):
-                print("Error: Project not found.")
-                continue
+        while True:
+            print("=== Main Menu ===")
+            print("1. List Projects")
+            print("2. Create Project")
+            print("0. Exit")
 
-            while True:
-                manager.view_project_details(p_idx)
-                print("1. Edit Project")
-                print("2. Delete Project")
-                print("3. List Tasks")
-                print("4. Add Task")
-                print("0. Back")
+            choice = input("\nChoose an option: ").strip()
 
-                p_choice = input("\nChoose option: ").strip()
+            if choice == "1":
+                if not manager.print_projects():
+                    continue
 
-                if p_choice == "0":
-                    break
-                elif p_choice == "1":
-                    manager.handle_edit_project(p_idx)
-                elif p_choice == "2":
-                    confirm = input("Are you sure? All tasks will be deleted (y/n): ")
-                    if confirm.lower() == 'y':
-                        ok, msg = manager.project_service.delete_project(p_idx)
-                        print(f">> {msg}\n")
+                p_idx = manager._get_int("Enter project index to open (or 0 to back): ")
+                if p_idx is None or p_idx == 0:
+                    continue
+
+                if not manager.project_service.check_project_exists(p_idx):
+                    print("Error: Project not found.")
+                    continue
+
+                while True:
+                    manager.view_project_details(p_idx)
+                    print("1. Edit Project")
+                    print("2. Delete Project")
+                    print("3. List Tasks")
+                    print("4. Add Task")
+                    print("0. Back")
+
+                    p_choice = input("\nChoose option: ").strip()
+
+                    if p_choice == "0":
                         break
-                elif p_choice == "3":
-                    if manager.list_project_tasks(p_idx):
-                        t_idx = manager._get_int("Enter task index to view/edit (or 0 to back): ")
-                        if t_idx is None or t_idx == 0:
-                            continue
+                    elif p_choice == "1":
+                        manager.handle_edit_project(p_idx)
+                    elif p_choice == "2":
+                        confirm = input("Are you sure? All tasks will be deleted (y/n): ")
+                        if confirm.lower() == 'y':
+                            ok, msg = manager.project_service.delete_project(p_idx)
+                            print(f">> {msg}\n")
+                            break
+                    elif p_choice == "3":
+                        if manager.list_project_tasks(p_idx):
+                            t_idx = manager._get_int("Enter task index to view/edit (or 0 to back): ")
+                            if t_idx is None or t_idx == 0:
+                                continue
 
-                        while True:
-                            manager.view_task_details(p_idx, t_idx)
-                            print("1. Edit Task")
-                            print("2. Delete Task")
-                            print("0. Back")
-                            t_choice = input("Choose: ").strip()
+                            while True:
+                                manager.view_task_details(p_idx, t_idx)
+                                print("1. Edit Task")
+                                print("2. Delete Task")
+                                print("0. Back")
+                                t_choice = input("Choose: ").strip()
 
-                            if t_choice == "0":
-                                break
-                            elif t_choice == "1":
-                                manager.handle_edit_task(p_idx, t_idx)
-                            elif t_choice == "2":
-                                manager.delete_task(p_idx, t_idx)
-                                break
+                                if t_choice == "0":
+                                    break
+                                elif t_choice == "1":
+                                    manager.handle_edit_task(p_idx, t_idx)
+                                elif t_choice == "2":
+                                    manager.delete_task(p_idx, t_idx)
+                                    break
 
-                elif p_choice == "4":
-                    manager.handle_add_task(p_idx)
+                    elif p_choice == "4":
+                        manager.handle_add_task(p_idx)
 
-        elif choice == "2":
-            manager.handle_add_project()
+            elif choice == "2":
+                manager.handle_add_project()
 
-        elif choice == "0":
-            print("exiting...")
-            break
-        else:
-            print("Invalid command.")
+            elif choice == "0":
+                print("exiting...")
+                break
+            else:
+                print("Invalid command.")
+
+    finally:
+        db_session.close()
 
 
 if __name__ == "__main__":
