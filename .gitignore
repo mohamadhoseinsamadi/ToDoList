@@ -1,1 +1,13 @@
+venv-alembic/
+.venv/
+env/
+
+
 .env
+
+__pycache__/
+*.pyc
+*.pyo
+*~
+*.log
+.coverage
