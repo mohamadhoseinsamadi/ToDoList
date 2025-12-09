@@ -9,7 +9,7 @@ from app.services.project_service import ProjectService
 from app.services.task_service import TaskService
 from app.repositories.project_repository import SqlAlchemyProjectRepository
 from app.repositories.task_repository import SqlAlchemyTaskRepository
-
+from app.commands.autoclose_overdue import schedule_overdue
 
 def main_loop():
     db_session = SessionLocal()
@@ -23,6 +23,8 @@ def main_loop():
         task_service = TaskService(task_repo)
 
         manager = ToDoManager(project_service, task_service)
+
+        schedule_overdue(task_service)
 
         while True:
             print("=== Main Menu ===")

@@ -118,3 +118,7 @@ class TaskService:
     def print_project_tasks(self, project_id: str) -> Optional[List[Task]]:
         tasks = self.task_repo.get_project_tasks(project_id)
         return tasks if tasks else None
+
+    def autoclose_overdue_tasks(self) -> None:
+        time = datetime.now()
+        self.task_repo.autoclose_overdue_tasks(time)
