@@ -45,6 +45,24 @@ class TaskRepository(ABC):
     def autoclose_overdue_tasks(self, current_time: datetime) -> int:
         pass
 
+    @abstractmethod
+    def get_task_by_id(self, task_id: str, project_id: str) -> Optional[Task]:
+        pass
+
+    @abstractmethod
+    def get_all_tasks(self) -> List[Task]:
+        pass
+
+    @abstractmethod
+    def get_task(self, task_id: str) -> Optional[Task]:
+        pass
+
+    @abstractmethod
+    def delete_task_by_id(self, task_id: str) -> bool:
+        pass
+    @abstractmethod
+    def update_task_global(self, task_id: str, **kwargs) -> bool:
+        pass
 
 class SqlAlchemyTaskRepository(TaskRepository):
     def __init__(self, session: Session):
@@ -128,3 +146,40 @@ class SqlAlchemyTaskRepository(TaskRepository):
             self.session.commit()
 
         return closed_count
+
+    def get_task_by_id(self, task_id: str, project_id: str) -> Optional[Task]:
+        return self.session.query(Task).filter(Task.id == task_id, Task.project_id == project_id).first()
+
+    def get_all_tasks(self) -> List[Task]:
+        return self.session.query(Task).all()
+
+    def get_task(self, task_id: str) -> Optional[Task]:
+        """Retrieve a single task by its unique ID."""
+        return self.session.query(Task).filter(Task.id == task_id).first()
+
+    def update_task_global(self, task_id: str, **kwargs) -> bool:
+        """Update a task using its ID, without checking project_id."""
+        task = self.get_task(task_id)
+        if not task:
+            return False
+
+        if 'title' in kwargs and kwargs['title'] is not None:
+            task.name = kwargs['title']
+        if 'description' in kwargs and kwargs['description'] is not None:
+            task.description = kwargs['description']
+        if 'status' in kwargs and kwargs['status'] is not None:
+            task.status = kwargs['status']
+        if 'deadline' in kwargs and kwargs['deadline'] is not None:
+            task.deadline = kwargs['deadline']
+
+        self.session.commit()
+        return True
+
+    def delete_task_by_id(self, task_id: str) -> bool:
+        """Delete a task by its unique ID."""
+        task = self.get_task(task_id)
+        if task:
+            self.session.delete(task)
+            self.session.commit()
+            return True
+        return False

@@ -22,26 +22,26 @@ class ProjectService:
             return None
         return projects[index - 1]
 
-    def add_project(self, name: str, description: str) -> Tuple[bool, str]:
+    def add_project(self, name: str, description: str) -> Tuple[bool, str, Optional[Project]]:
         if not name or name.strip() == "":
-            return False, "Project name cannot be empty"
+            return False, "Project name cannot be empty", None
 
         if len(name) > MAX_PROJECT_NAME_LENGTH:
-            return False, f"Project name cannot exceed {MAX_PROJECT_NAME_LENGTH} characters"
+            return False, f"Project name cannot exceed {MAX_PROJECT_NAME_LENGTH} characters", None
 
         if len(description) > MAX_PROJECT_DESCRIPTION_LENGTH:
-            return False, f"Project description cannot exceed {MAX_PROJECT_DESCRIPTION_LENGTH} characters"
+            return False, f"Project description cannot exceed {MAX_PROJECT_DESCRIPTION_LENGTH} characters", None
 
         if self.repo.project_exists(name):
-            return False, "Project name already exists"
+            return False, "Project name already exists", None
 
         current_count = len(self.repo.get_all_projects())
         if current_count >= MAX_NUMBER_OF_PROJECTS:
-            return False, f"Cannot exceed maximum number of projects: {MAX_NUMBER_OF_PROJECTS}"
+            return False, f"Cannot exceed maximum number of projects: {MAX_NUMBER_OF_PROJECTS}", None
 
         proj = Project(id=str(uuid.uuid4()), name=name, description=description)
         self.repo.add_project(proj)
-        return True, "Project created successfully"
+        return True, "Project created successfully", proj
 
     def print_all_projects(self) -> List[Project]:
         return self.repo.get_all_projects()
@@ -81,3 +81,38 @@ class ProjectService:
 
         success = self.repo.delete_project(proj.id)
         return (True, "Project deleted successfully") if success else (False, "Failed to delete project")
+
+    def get_project_by_id(self, id: str):
+        return self.repo.get_project(id)
+
+    def edit_project_by_id(self, project_id: str, new_name: Optional[str] = None, new_description: Optional[str] = None) -> Tuple[bool, str]:
+        """Edit project using UUID (Used by API)"""
+        proj = self.repo.get_project(project_id)
+        if proj is None:
+            return False, "Project not found"
+
+        if new_name is not None:
+            s_name = new_name.strip()
+            if s_name == "":
+                return False, "Project name cannot be empty"
+            if len(s_name) > MAX_PROJECT_NAME_LENGTH:
+                return False, f"Name exceeds max length ({MAX_PROJECT_NAME_LENGTH})"
+
+            if s_name != proj.name and self.repo.project_exists(s_name):
+                return False, "Project name already exists"
+
+            self.repo.edit_project_name(proj.id, s_name)
+
+        if new_description is not None:
+            if len(new_description) > MAX_PROJECT_DESCRIPTION_LENGTH:
+                return False, f"Description exceeds max length ({MAX_PROJECT_DESCRIPTION_LENGTH})"
+            self.repo.edit_project_description(proj.id, new_description)
+
+        return True, "Project updated successfully"
+
+    def delete_project_by_id(self, project_id: str) -> Tuple[bool, str]:
+        """Delete project using UUID (Used by API)"""
+        success = self.repo.delete_project(project_id)
+        if success:
+            return True, "Project deleted successfully"
+        return False, "Project not found"

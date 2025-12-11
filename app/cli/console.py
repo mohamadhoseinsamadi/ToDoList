@@ -96,7 +96,7 @@ class ToDoManager:
         if not name:
             return
         desc = input("Enter description (optional): ").strip()
-        ok, msg = self.project_service.add_project(name, desc)
+        ok, msg, _ = self.project_service.add_project(name, desc)
         print(f">> {msg}\n")
 
     def handle_edit_project(self, index: int):
@@ -112,7 +112,8 @@ class ToDoManager:
 
     def handle_add_task(self, project_index: int):
         title = self._get_input("Enter task title: ")
-        if not title: return
+        if not title:
+            return
         desc = input("Enter description (optional): ").strip()
 
         deadline = self._get_date("Enter deadline (YYYY-MM-DD) or skip: ")
@@ -121,7 +122,8 @@ class ToDoManager:
 
         proj = self.project_service.find_project(project_index)
 
-        ok, msg = self.task_service.create_task(proj.id, title, desc, status=status_str, deadline=deadline)
+        ok, msg, _ = self.task_service.create_task(project_id=proj.id, title=title, description=desc, status=status_str,
+                                                   deadline=deadline)
         print(f">> {msg}\n")
 
     def handle_edit_task(self, project_index: int, task_index: int):
