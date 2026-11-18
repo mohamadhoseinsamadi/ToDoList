@@ -1,36 +1,76 @@
-# ToDoList - Python OOP Project
+# ToDoList
 
-## 🚀 Overview
+A task management system built with Python and OOP principles: organize work into **projects**, each containing groups of **tasks** with statuses (`todo`, `doing`, `done`). Ships with two interfaces — an interactive **CLI** and a **REST API** (FastAPI) — both backed by PostgreSQL through SQLAlchemy.
 
-A robust and intuitive task management system built with Python, leveraging Object-Oriented Programming (OOP) principles. This project showcases clean architecture, modular design, and adherence to Python best practices, making it an excellent learning resource or foundation for further development.
+## Features
 
-## 🔑Key Features
+- **Project management:** create, edit, and delete projects (full CRUD).
+- **Task management:** add, modify, and remove tasks within each project.
+- **Status tracking:** `todo` → `doing` → `done`.
+- **Cascade delete:** deleting a project removes its tasks.
+- **Input validation:** name/description length limits and field validation.
+- **Configurable limits:** maximum projects, tasks, and field lengths via environment variables.
+- **Overdue auto-close:** a scheduled job closes overdue tasks.
 
-### 📁 Project Management
-Create, Edit, and Delete Projects: Easily manage your projects with full CRUD functionality.
-### 📝 Task Management: 
-Add, modify, and remove tasks within projects, ensuring seamless organization.
-### 🕒Status Tracking: 
-Monitor task progress with customizable statuses (todo, doing, done).
+## Requirements
 
-## 🛠️Technical Highlights
+- Python 3.10+
+- PostgreSQL
+- [Poetry](https://python-poetry.org/)
 
-### 🧠In-Memory Storage: 
-Fast and efficient temporary data storage (resets on program close).
-### 💻CLI Interface:
-A user-friendly command-line interface for all operations, designed for simplicity and efficiency.
-### ⚙️Configuration Management:
-Environment-based configuration using .env files for flexible deployment.
-### 🔍Input Validation: 
-Comprehensive validation for project and task names, descriptions, and other inputs to ensure data integrity.
-### 🧹Cascade Delete: 
-Automatic task deletion when associated projects are removed, maintaining data consistency.
+## Setup
 
-## Why This Project?
+```bash
+poetry install
+cp .env.example .env   # then set DATABASE_URL to your PostgreSQL instance
+```
 
-### 🎓Educational Value:
-Perfect for learning Python OOP, clean architecture, and modular design.
-### 🚀Practical Use:
-Lightweight and efficient, ideal for personal task management or as a starting point for more complex applications.
-### 🏆Best Practices:
-Follows Python coding standards and includes thorough input validation and configuration management.
+Database tables are created automatically at startup.
+
+## Running
+
+**REST API:**
+
+```bash
+poetry run uvicorn app.main:app --reload
+```
+
+- Interactive docs: http://127.0.0.1:8000/docs
+- Endpoints are served under `/api/v1` (projects, tasks, all-tasks).
+
+**CLI:**
+
+```bash
+poetry run python -m app.cli_run
+```
+
+## Configuration
+
+Limits can be tuned in `.env` (defaults shown):
+
+```
+MAX_NUMBER_OF_PROJECTS=10
+MAX_NUMBER_OF_TASKS=50
+MAX_PROJECT_NAME_LENGTH=30
+MAX_PROJECT_DESCRIPTION_LENGTH=150
+MAX_TASK_NAME_LENGTH=30
+MAX_TASK_DESCRIPTION_LENGTH=150
+```
+
+## Project Structure
+
+```
+app/
+  api/          # FastAPI routers, controllers, request/response schemas
+  cli/          # Interactive console interface
+  services/     # Business logic
+  repositories/ # SQLAlchemy data access
+  models/       # ORM models (Project, Task)
+  db/           # Engine, session, declarative base
+  commands/     # Scheduled jobs (overdue auto-close)
+  memory/       # Legacy in-memory storage (kept for reference)
+```
+
+## License
+
+MIT — see [LICENSE](LICENSE).

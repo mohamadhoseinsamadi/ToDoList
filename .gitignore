@@ -11,3 +11,5 @@ __pycache__/
 *~
 *.log
 .coverage
+# Alembic config points to a local venv path; not usable as committed
+alembic.ini

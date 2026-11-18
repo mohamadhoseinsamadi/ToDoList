@@ -1,4 +1,6 @@
-from app.db.session import SessionLocal
+from app.db.session import SessionLocal, engine
+from app.db.base import Base
+from app.models import project, task  # noqa: F401  (register models with Base)
 from app.cli.console import ToDoManager
 from app.services.project_service import ProjectService
 from app.services.task_service import TaskService
@@ -8,6 +10,7 @@ from app.commands.autoclose_overdue import schedule_overdue
 
 
 def main_loop():
+    Base.metadata.create_all(bind=engine)
     db_session = SessionLocal()
 
     try:
